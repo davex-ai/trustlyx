@@ -8,7 +8,7 @@ export interface IUser extends Document {
   refreshTokens: ISession[];
   tenantId: string;
   verificationTokens: IVerificationToken[]
-  provider: string
+  provider: stringl
 }
 export interface ISession {
   token: string;

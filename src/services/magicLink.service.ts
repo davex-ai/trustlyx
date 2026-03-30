@@ -28,7 +28,7 @@ export const sendMagicLink = async (sdk: AuthSDK, email: string) => {
     { upsert: true, new: true }
   );
 
-  await sdk.emailAdapter?.sendEmail(
+  await sdk.emailAdapter?.sendEmail(//doesnt exist
     email,
     "Magic Link",
     `<a href="${sdk.appUrl}/magic/${rawToken}">Login</a>`

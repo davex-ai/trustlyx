@@ -1,47 +1,50 @@
 import { EmailAdapter, CacheAdapter } from "../adapters/types";
-import { JWTService } from "./jwt";
+import { JWTService } from "./JWTService";
+import { AuthService } from "../services/AuthService";
+import { OAuthService } from "../services/OAuthService";
+import { SecurityService } from "../services/SecurityService";
+import { UserService } from "../services/UserService";
 
 export interface AuthConfig {
-  mongoUri: string;
   jwtSecret: string;
   refreshSecret: string;
-  appUrl: string
-
-  getTenant?: (req: any) => string
+  appUrl: string;
 
   adapters?: {
     email?: EmailAdapter;
     cache?: CacheAdapter;
   };
+
   providers?: {
     google?: {
       clientId: string;
       clientSecret: string;
       redirectUri: string;
     };
-  }
+  };
 }
-
 
 export class AuthSDK {
   public jwt: JWTService;
+  public auth: AuthService;
+  public oauth: OAuthService;
+  public security: SecurityService;
+  public users: UserService;
 
   constructor(private config: AuthConfig) {
-    if (!config.jwtSecret || !config.refreshSecret) {
-      throw new Error("Missing secrets");
-    }
+    this.jwt = new JWTService(config.jwtSecret, config.refreshSecret);
 
-    this.jwt = new JWTService(
-      config.jwtSecret,
-      config.refreshSecret
-    );
+    this.security = new SecurityService(this);
+    this.users = new UserService(this);
+    this.oauth = new OAuthService(this);
+    this.auth = new AuthService(this);
   }
 
   get appUrl() {
     return this.config.appUrl;
   }
 
-  get emailAdapter() {
+  get email() {
     return this.config.adapters?.email;
   }
 
