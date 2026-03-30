@@ -21,7 +21,7 @@ export const sendMagicLink = async (email: string) => {
   user.verificationTokens.push({ token: hashed, expiresAt: new Date(Date.now() + 15 * 60 * 1000) });
   await user.save();
 
-  const { userEmail: emailAdapter } = getAdapters();
+  const { email: emailAdapter } = getAdapters();
 
   await emailAdapter?.sendEmail(
     email,

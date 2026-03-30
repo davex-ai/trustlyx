@@ -4,6 +4,7 @@ import { signAccessToken, signRefreshToken } from "../core/jwt";
 import { isLockedOut, recordFailedLogin, resetFailedLogin } from "../core/bruteforce";
 import { generateVerificationToken, hashToken } from "../core/emailVerification";
 import { getAdapters } from "../../helpers";
+import { getGoogleUser } from "./google";
 
 export const signup = async (email: string, password: string) => {
   const existing = await User.findOne({ email });
@@ -20,10 +21,9 @@ export const signup = async (email: string, password: string) => {
     verificationTokens: [{ token: hashedToken, expiresAt: new Date(Date.now() + 15 * 60 * 1000) }]
 });
 
-//TODO: SMTP/RESEND
-const { userEmail } = getAdapters();
+const { email: emailAdapter } = getAdapters();
 
-await userEmail?.sendEmail(
+await emailAdapter?.sendEmail(
     user.email, "Verify your email", `<p>Click <a href="http://localhost:3000/verify/${rawToken}">here</a> to verify your email.</p>`
 );
 
@@ -69,4 +69,28 @@ export const login = async (email: string, password: string) => {
     verified: user.verified
     };
   return { accessToken, refreshToken, user: safeUser };
+};
+
+export const handleGoogleAuth = async (code: string) => {
+  const googleUser = await getGoogleUser(code);
+
+  let user = await User.findOne({ email: googleUser.email });
+
+  if (!user) {
+    user = await User.create({
+      email: googleUser.email,
+      verified: true,
+    });
+  }
+
+  const accessToken = signAccessToken({
+    id: user._id,
+    role: user.role,
+  });
+
+  const refreshToken = signRefreshToken({
+    id: user._id,
+  });
+
+  return { accessToken, refreshToken };
 };

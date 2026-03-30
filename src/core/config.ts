@@ -9,6 +9,13 @@ export interface AuthConfig {
     email?: EmailAdapter;
     cache?: CacheAdapter;
   };
+  providers?: {
+    google?: {
+      clientId: string;
+      clientSecret: string;
+      redirectUri: string;
+    };
+  }
 }
 
 let config: AuthConfig;
