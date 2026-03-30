@@ -1,5 +1,5 @@
-import { AuthSDK } from "../core/AuthSDK";
-import { User } from "../models/User";
+import { AuthSDK } from "../core/config";
+import { User } from "../models/user.model";
 
 export const handleGoogleAuth = async (
   sdk: AuthSDK,
@@ -11,6 +11,7 @@ export const handleGoogleAuth = async (
   let user = await User.findOne({
     provider: "google",
     email: googleUser.email,
+    tenantId
   });
 
   if (!user) {

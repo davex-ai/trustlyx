@@ -16,6 +16,11 @@ export interface AuthConfig {
     cache?: CacheAdapter;
   };
 
+  hooks?: {
+  onUserCreated?: (user: any) => void;
+  onLogin?: (user: any) => void;
+}
+
   getTenant?: (req: any) => string
   providers?: {
     google?: {

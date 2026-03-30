@@ -14,6 +14,7 @@ export interface ISession {
   token: string;
   createdAt: Date;
   expiresAt: Date;
+  used: boolean;
 }
 
 export interface IVerificationToken {

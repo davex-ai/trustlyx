@@ -54,6 +54,7 @@ export class AuthService {
       token: hashed,
       createdAt: new Date(),
       expiresAt: new Date(Date.now() + 7 * 86400000),
+      used: false
     });
 
     await user.save();
@@ -63,7 +64,7 @@ export class AuthService {
 
   async refresh(refreshToken: string) {
     const { sdk } = this.ctx;
-    const decoded: any = sdk.jwt.verifyRefreshToken(refreshToken);//cant find name sdk
+    const decoded: any = sdk.jwt.verifyRefreshToken(refreshToken);
 
     const user = await User.findById(decoded.id);
     if (!user) throw new Error("User not found");
