@@ -23,6 +23,10 @@ export const verifyAccessToken = (token: string) => {
 };
 
 export const verifyRefreshToken = (token: string) => {
-  const { refreshSecret } = getConfig();
-  return jwt.verify(token, refreshSecret);
+   const config = getConfig();
+
+  if (!config.refreshSecret) {
+    throw new Error("Missing refresh secret");
+  }
+  return jwt.verify(token, config.refreshSecret);
 };
