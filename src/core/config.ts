@@ -1,9 +1,11 @@
 import { EmailAdapter, CacheAdapter } from "../adapters/types";
+import { JWTService } from "./jwt";
 
 export interface AuthConfig {
   mongoUri: string;
   jwtSecret: string;
   refreshSecret: string;
+  appUrl: string
 
   getTenant?: (req: any) => string
 
@@ -20,15 +22,34 @@ export interface AuthConfig {
   }
 }
 
-let config: AuthConfig;
 
+export class AuthSDK {
+  public jwt: JWTService;
 
-export const createAuth = (config: AuthConfig) => {
-  if (!config) throw new Error("Auth SDK not initialized");
-  const emailAdapter = config.adapters?.email;
-  const cache = config.adapters?.cache;
-  const appUrl = config.appUrl//appurl dosnt exist
+  constructor(private config: AuthConfig) {
+    if (!config.jwtSecret || !config.refreshSecret) {
+      throw new Error("Missing secrets");
+    }
 
-    if (!config.jwtSecret || !config.refreshSecret) throw new Error("Missing secrets");
-  return config;
-};
+    this.jwt = new JWTService(
+      config.jwtSecret,
+      config.refreshSecret
+    );
+  }
+
+  get appUrl() {
+    return this.config.appUrl;
+  }
+
+  get emailAdapter() {
+    return this.config.adapters?.email;
+  }
+
+  get cache() {
+    return this.config.adapters?.cache;
+  }
+
+  get google() {
+    return this.config.providers?.google;
+  }
+}

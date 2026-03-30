@@ -1,21 +1,21 @@
-
 import { CacheAdapter } from "./types";
 
-const { cache } = config.adapters.cache
 export class RedisAdapter implements CacheAdapter {
+  constructor(private cache: any) {
+    if (!cache) throw new Error("Cache not configured");
+  }
+
   async get(key: string) {
-    return await cache.get(key);//cace is possible possible undefin..
+    return this.cache.get(key);
   }
 
   async set(key: string, value: string, ttl?: number) {
-    if (ttl) {
-      await cache.set(key, value, ttl);
-    } else {
-      await cache.set(key, value);
-    }
+    return ttl
+      ? this.cache.set(key, value, ttl)
+      : this.cache.set(key, value);
   }
 
   async del(key: string) {
-    await cache.del(key);
+    return this.cache.del(key);
   }
 }

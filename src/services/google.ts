@@ -1,43 +1,36 @@
 import axios from "axios";
-import { getConfig } from "../core/config";
+import { AuthSDK } from "../core/config";
 
-export const getGoogleUser = async (code: string) => {
-    const google = getConfig().providers?.google
-    if(!google) throw new Error("Google provider not configured");
-  const { clientId, clientSecret, redirectUri } = google;
+export const getGoogleUser = async (sdk: AuthSDK, code: string) => {
+  const google = sdk.google;
+  if (!google) throw new Error("Google provider not configured");
 
   const tokenRes = await axios.post(
     "https://oauth2.googleapis.com/token",
     new URLSearchParams({
       code,
-      client_id: clientId,
-      client_secret: clientSecret,
-      redirect_uri: redirectUri,
+      client_id: google.clientId,
+      client_secret: google.clientSecret,
+      redirect_uri: google.redirectUri,
       grant_type: "authorization_code",
     }),
-    {
-        headers: {
-            "Content-Type": "application/x-www-form-urlencoded"
-        }
-    }
+    { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
   );
 
-  const { access_token } = tokenRes.data;
+  const accessToken = tokenRes.data.access_token;
 
   const userRes = await axios.get(
     "https://www.googleapis.com/oauth2/v2/userinfo",
     {
-      headers: {
-        Authorization: `Bearer ${access_token}`,
-      },
+      headers: { Authorization: `Bearer ${accessToken}` },
     }
   );
 
   return userRes.data;
 };
 
-export const getGoogleAuthUrl = () => {
-  const google = getConfig().providers?.google;
+export const getGoogleAuthUrl = (sdk: AuthSDK) => {
+  const google = sdk.google;
   if (!google) throw new Error("Google not configured");
 
   const params = new URLSearchParams({

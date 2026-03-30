@@ -1,36 +1,41 @@
 import crypto from "crypto";
 import { getAdapters } from "../../helpers";
 import { User } from "../models/user.model";
-import { signAccessToken, signRefreshToken } from "../core/jwt";
 import { generateVerificationToken } from "../core/emailVerification";
+import { AuthSDK } from "../core/config";
 
 const hashToken = (token: string) =>
   crypto.createHash("sha256").update(token).digest("hex");
 
-export const sendMagicLink = async (email: string) => {
-  let user = await User.findOne({ email });
+export const sendMagicLink = async (sdk: AuthSDK, email: string) => {
+  const rawToken = crypto.randomBytes(32).toString("hex");
 
-  if (!user) {
-    user = await User.create({ email, verified: true });
-  }
+  const hashed = crypto
+    .createHash("sha256")
+    .update(rawToken)
+    .digest("hex");
 
-  const rawToken = generateVerificationToken();
-  const hashed = hashToken(rawToken);
-  user.verificationTokens = [];
+  const user = await User.findOneAndUpdate(
+    { email },
+    {
+      $push: {
+        verificationTokens: {
+          token: hashed,
+          expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+        },
+      },
+    },
+    { upsert: true, new: true }
+  );
 
-  user.verificationTokens.push({ token: hashed, expiresAt: new Date(Date.now() + 15 * 60 * 1000) });
-  await user.save();
-
-  const { email: emailAdapter } = getAdapters();
-
-  await emailAdapter?.sendEmail(
+  await sdk.emailAdapter?.sendEmail(
     email,
-    "Your magic login link",
-    `<a href="${appUrl}/magic/${rawToken}">Login</a>`
+    "Magic Link",
+    `<a href="${sdk.appUrl}/magic/${rawToken}">Login</a>`
   );
 };
 
-export const verifyMagicLink = async (token: string) => {
+export const verifyMagicLink = async (sdk: AuthSDK, token: string) => {
   const hashed = hashToken(token);
 
   const user = await User.findOne({
@@ -53,13 +58,13 @@ if (new Date() > record.expiresAt) {
   );
 
   await user.save();
-  const accessToken = signAccessToken({
-    id: user._id,
+  const accessToken = sdk.jwt.signAccessToken({
+    id: user._id.toString(),
     role: user.role,
   });
 
-  const refreshToken = signRefreshToken({
-    id: user._id,//type object isnt assignable to string
+  const refreshToken = sdk.jwt.signRefreshToken({
+    id: user._id.toString(),
   });
 
   return { accessToken, refreshToken };

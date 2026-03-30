@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
-import { verifyAccessToken } from "../core/jwt";
+import { AuthSDK } from "./../core/config";
 
-export const protect = () => {
+export const protect = (sdk: AuthSDK) => {
   return (req: Request, res: Response, next: NextFunction) => {
     try {
       const header = req.headers.authorization;
@@ -9,7 +9,7 @@ export const protect = () => {
       if (!header) throw new Error("No token");
 
       const token = header.split(" ")[1];
-      const decoded = verifyAccessToken(token);
+      const decoded = sdk.jwt.verifyAccessToken(token);
 
       (req as any).user = decoded;
 
