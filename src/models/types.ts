@@ -6,8 +6,7 @@ export interface IUser extends Document {
   role: "user" | "admin";
   verified: boolean;
   refreshTokens: ISession[];
-  verificationTokens: string[];
-
+  verificationTokens: IVerificationToken[]
 }
 export interface ISession {
   token: string;
@@ -15,3 +14,7 @@ export interface ISession {
   expiresAt: Date;
 }
 
+export interface IVerificationToken {
+  token: string;
+  expiresAt: Date;
+}

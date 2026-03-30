@@ -16,8 +16,9 @@ export const sendMagicLink = async (email: string) => {
 
   const rawToken = generateVerificationToken();
   const hashed = hashToken(rawToken);
+  user.verificationTokens = [];
 
-  user.verificationTokens.push(hashed);
+  user.verificationTokens.push({ token: hashed, expiresAt: new Date(Date.now() + 15 * 60 * 1000) });
   await user.save();
 
   const { userEmail: emailAdapter } = getAdapters();
@@ -33,11 +34,25 @@ export const verifyMagicLink = async (token: string) => {
   const hashed = hashToken(token);
 
   const user = await User.findOne({
-    verificationTokens: hashed,
-  });
+    "verificationTokens.token": hashed,
+});
 
-  if (!user) throw new Error("Invalid link");
+if (!user) throw new Error("Invalid link");
+const record = user!.verificationTokens.find(
+(t) => t.token === hashed
+);
 
+if (!record) throw new Error("Invalid link");
+
+if (new Date() > record.expiresAt) {
+  throw new Error("Link expired");
+}
+
+  user.verificationTokens = user.verificationTokens.filter(
+    (t) => t.token !== hashed
+  );
+
+  await user.save();
   const accessToken = signAccessToken({
     id: user._id,
     role: user.role,

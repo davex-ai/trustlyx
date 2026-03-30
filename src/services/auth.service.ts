@@ -17,7 +17,7 @@ export const signup = async (email: string, password: string) => {
   const user = await User.create({
     email,
     password: hashed,
-    verificationTokens: [hashedToken]
+    verificationTokens: [{ token: hashedToken, expiresAt: new Date(Date.now() + 15 * 60 * 1000) }]
 });
 
 //TODO: SMTP/RESEND

@@ -8,12 +8,12 @@ const sessionSchema = new mongoose.Schema<ISession>({
 });
 
 const userSchema = new mongoose.Schema<IUser>({
-  email: { type: String, unique: true },
+  email: { type: String, unique: true, index: true },
   password: { type: String, required: true },
   role: { type: String, default: "user" },
   verified: { type: Boolean, default: false },
   refreshTokens: [sessionSchema],
-  verificationTokens: [{ type: String }]
+  verificationTokens: [{ token: { type: String }, expiresAt: { type: Date } }]
 });
 
 export const User = mongoose.model<IUser>("User", userSchema);
