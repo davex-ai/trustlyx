@@ -12,7 +12,8 @@ const userSchema = new mongoose.Schema<IUser>({
   password: { type: String, required: true },
   role: { type: String, default: "user" },
   verified: { type: Boolean, default: false },
-  refreshTokens: [sessionSchema]
+  refreshTokens: [sessionSchema],
+  verificationTokens: [{ type: String }]
 });
 
-export const User = mongoose.model("User", userSchema);
+export const User = mongoose.model<IUser>("User", userSchema);

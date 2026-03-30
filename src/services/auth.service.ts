@@ -1,6 +1,8 @@
 import { User } from "../models/user.model";
 import { hashPassword, comparePassword } from "../core/password";
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from "../core/jwt";
+import { isLockedOut, recordFailedLogin, resetFailedLogin } from "../core/bruteforce";
+import { generateVerificationToken } from "../core/emailVerification";
 
 export const signup = async (email: string, password: string) => {
   const existing = await User.findOne({ email });
@@ -8,20 +10,28 @@ export const signup = async (email: string, password: string) => {
 
   const hashed = await hashPassword(password);
 
+  const token = generateVerificationToken()
+
   const user = await User.create({
     email,
     password: hashed,
-  });
+    verificationTokens: [token]// no over load matches this call    
+});
+
+//TODO: SMTP/RESEND
+console.log(`http://localhost:3000/verify/${token}`);
 
   return user;
 };
 
 export const login = async (email: string, password: string) => {
+    if (await isLockedOut(email)) throw new Error("Account locked due to too many failed attempts");
   const user = await User.findOne({ email });
-  if (!user) throw new Error("User not found");
+  if (!user) {await recordFailedLogin(email); throw new Error("User not found")};
 
   const valid = await comparePassword(password, user.password);
-  if (!valid) throw new Error("Invalid credentials");
+  if (!valid) {await recordFailedLogin(email); throw new Error("Invalid credentials")};
+  await resetFailedLogin(email);
 
   const accessToken = signAccessToken({
     id: user._id,
@@ -32,18 +42,19 @@ export const login = async (email: string, password: string) => {
     id: user._id,
   });
 
-  user.refreshTokens.push({//argument of type '{ token...}
+  user.refreshTokens.push({
     token: refreshToken,
     createdAt: new Date(),
     expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
   });
 
   await user.save();
+
     const safeUser = {
     id: user._id,
     email: user.email,
     role: user.role,
-    verified: user.verified,
+    verified: user.verified
     };
-  return { accessToken, refreshToken, user };
+  return { accessToken, refreshToken, user: safeUser };
 };
