@@ -1,121 +1,83 @@
+import crypto from "crypto"; 
 import { User } from "../models/user.model";
-import { hashPassword, comparePassword } from "../core/password";
-import { isLockedOut, recordFailedLogin, resetFailedLogin } from "../core/bruteforce";
-import { generateVerificationToken, hashToken } from "../core/emailVerification";
-import { getGoogleUser } from "./oauth";//doesnt exist
 import { AuthSDK } from "../core/config";
+import { AuthContext } from "../core/context";
+
+const hashToken = (token: string) =>
+  crypto.createHash("sha256").update(token).digest("hex");
 
 export class AuthService {
-  constructor(private sdk: AuthSDK) {}
+  constructor(private ctx: AuthContext) {}
 
-  async signup(email: string, password: string, tenantId: string) {
+  async signup(email: string, password: string) {
+    const { tenantId, sdk } = this.ctx;
     const existing = await User.findOne({ email, tenantId });
     if (existing) throw new Error("User already exists");
 
-    const hashed = await hashPassword(password);
-    const rawToken = generateVerificationToken();
-    const hashedToken = hashToken(rawToken);
+    const hashed = await sdk.security.hashPassword(password);
 
-    const user = await User.create({
+    return User.create({
       email,
       password: hashed,
       tenantId,
-      verificationTokens: [
-        { 
-          token: hashedToken, 
-          expiresAt: new Date(Date.now() + 15 * 60 * 1000) 
-        }
-      ],
+      verified: false,
     });
-
-    return user;
   }
 
-  async login(email: string, password: string, tenantId: string) {
-    if (await isLockedOut(email, tenantId)) {
-      throw new Error("Account locked due to too many failed attempts");
-    }
-
+  async login(email: string, password: string) {
+    const { tenantId, sdk } = this.ctx;
     const user = await User.findOne({ email, tenantId });
-    if (!user) {
-      await recordFailedLogin(email, tenantId);
-      throw new Error("User not found");
-    }
+    if (!user) throw new Error("User not found");
 
-    const valid = await comparePassword(password, user.password);
-    if (!valid) {
-      await recordFailedLogin(email, tenantId);
-      throw new Error("Invalid credentials");
-    }
+    const valid = await sdk.security.comparePassword(
+      password,
+      user.password
+    );
 
-    await resetFailedLogin(email, tenantId);
+    if (!valid) throw new Error("Invalid credentials");
 
-    const accessToken = this.sdk.jwt.signAccessToken({
+    if (!user.verified) throw new Error("Verify your email");
+
+    const accessToken = sdk.jwt.signAccessToken({
       id: user._id.toString(),
       role: user.role,
+      tenantId
     });
 
-    if (!user.verified) {
-      throw new Error("Please verify your email");
-    }
-
-    const refreshToken = this.sdk.jwt.signRefreshToken({
+    const refreshToken = sdk.jwt.signRefreshToken({
       id: user._id.toString(),
     });
-    
-    const hashedRefreshToken = hashToken(refreshToken);
+
+    const hashed = hashToken(refreshToken);
 
     user.refreshTokens.push({
-      token: hashedRefreshToken,
+      token: hashed,
       createdAt: new Date(),
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    });
-
-    await user.save();
-
-    const safeUser = {
-      id: user._id,
-      email: user.email,
-      role: user.role,
-      verified: user.verified,
-    };
-
-    return { accessToken, refreshToken, user: safeUser };
-  }
-
-  async handleGoogleAuth(code: string, tenantId: string) {
-    const googleUser = await getGoogleUser(this.sdk, code);
-
-    let user = await User.findOne({ provider: "google", providerId: googleUser.id });
-
-    if (!user) {
-      user = await User.create({
-        email: googleUser.email,
-        tenantId,
-        verified: true,
-        provider: "google",
-      });
-    }
-
-    const accessToken = this.sdk.jwt.signAccessToken({
-      id: user._id.toString(),
-      role: user.role,
-    });
-
-    const refreshToken = this.sdk.jwt.signRefreshToken({
-      id: user._id.toString(),
-    });
-
-    const hashedRefreshToken = hashToken(refreshToken);
-
-    user.refreshTokens.push({
-      token: hashedRefreshToken,
-      createdAt: new Date(),
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      expiresAt: new Date(Date.now() + 7 * 86400000),
     });
 
     await user.save();
 
     return { accessToken, refreshToken };
+  }
+
+  async refresh(refreshToken: string) {
+    const { sdk } = this.ctx;
+    const decoded: any = sdk.jwt.verifyRefreshToken(refreshToken);//cant find name sdk
+
+    const user = await User.findById(decoded.id);
+    if (!user) throw new Error("User not found");
+
+    const hashed = hashToken(refreshToken);
+
+    const session = user.refreshTokens.find(t => t.token === hashed);
+    if (!session) throw new Error("Invalid session");
+
+    return {
+      accessToken: sdk.jwt.signAccessToken({
+        id: user._id.toString(),
+        role: user.role,
+      }),
+    };
   }
 }
