@@ -1,7 +1,8 @@
 import mongoose from "mongoose";
 import { setConfig, AuthConfig } from "./core/config";
 import { protect } from "./middleware/protect";
-import { signup, login } from "./services/auth.service";
+import { signup, login, handleGoogleAuth } from "./services/auth.service";
+import { getGoogleAuthUrl } from "./services/google";
 
 export const createAuth = (config: AuthConfig) => {
   setConfig(config);
@@ -12,5 +13,12 @@ export const createAuth = (config: AuthConfig) => {
     signup,
     login,
     protect,
+
+    oauth: {
+      google: {
+        getAuthUrl: getGoogleAuthUrl,
+        callback: handleGoogleAuth
+      }
+    }
   };
 };

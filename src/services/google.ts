@@ -30,3 +30,19 @@ export const getGoogleUser = async (code: string) => {
 
   return userRes.data;
 };
+
+export const getGoogleAuthUrl = () => {
+  const google = getConfig().providers?.google;
+  if (!google) throw new Error("Google not configured");
+
+  const params = new URLSearchParams({
+    client_id: google.clientId,
+    redirect_uri: google.redirectUri,
+    response_type: "code",
+    scope: "openid email profile",
+    access_type: "offline",
+    prompt: "consent",
+  });
+
+  return `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+};
