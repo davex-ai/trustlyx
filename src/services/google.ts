@@ -8,12 +8,17 @@ export const getGoogleUser = async (code: string) => {
 
   const tokenRes = await axios.post(
     "https://oauth2.googleapis.com/token",
-    {
+    new URLSearchParams({
       code,
       client_id: clientId,
       client_secret: clientSecret,
       redirect_uri: redirectUri,
       grant_type: "authorization_code",
+    }),
+    {
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+        }
     }
   );
 

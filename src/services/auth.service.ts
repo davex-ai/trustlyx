@@ -22,10 +22,8 @@ export const signup = async (email: string, password: string, tenantId: string) 
     verificationTokens: [{ token: hashedToken, expiresAt: new Date(Date.now() + 15 * 60 * 1000) }]
 });
 
-const { email: emailAdapter } = getAdapters();
-
 await emailAdapter?.sendEmail(
-    user.email, "Verify your email", `<p>Click <a href="http://localhost:3000/trustlyx/verify/${rawToken}">here</a> to verify your email.</p>`
+    user.email, "Verify your email", `<p>Click <a href="${appUrl}/verify/${rawToken}">here</a> to verify your email.</p>`
 );
 
 
@@ -42,7 +40,7 @@ export const login = async (email: string, password: string, tenantId: string) =
   await resetFailedLogin(email, tenantId);
 
   const accessToken = signAccessToken({
-    id: user._id,
+    id: user._id.toString(),
     role: user.role,
   });
 
@@ -51,7 +49,7 @@ export const login = async (email: string, password: string, tenantId: string) =
 }
 
   const refreshToken = signRefreshToken({
-    id: user._id,
+    id: user._id.toString(),
   });
   const hashedRefreshToken = hashToken(refreshToken);
 
@@ -87,12 +85,12 @@ export const handleGoogleAuth = async (code: string, tenantId: string) => {
   }
 
   const accessToken = signAccessToken({
-    id: user._id,
+    id: user._id.toString(),
     role: user.role,
   });
 
   const refreshToken = signRefreshToken({
-    id: user._id,
+    id: user._id.toString(),
   });
 
   const hashedRefreshToken = hashToken(refreshToken);

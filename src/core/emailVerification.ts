@@ -28,7 +28,7 @@ export const refresh = async (refreshToken: string) => {
   }
 
   const newAccessToken = signAccessToken({
-    id: user._id,
+    id: user._id,//type not assignable to str...
     role: user.role,
   });
 

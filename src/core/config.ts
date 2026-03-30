@@ -22,11 +22,13 @@ export interface AuthConfig {
 
 let config: AuthConfig;
 
-export const setConfig = (cfg: AuthConfig) => {
-  config = cfg;
-};
 
-export const getConfig = () => {
+export const createAuth = (config: AuthConfig) => {
   if (!config) throw new Error("Auth SDK not initialized");
+  const emailAdapter = config.adapters?.email;
+  const cache = config.adapters?.cache;
+  const appUrl = config.appUrl//appurl dosnt exist
+
+    if (!config.jwtSecret || !config.refreshSecret) throw new Error("Missing secrets");
   return config;
 };

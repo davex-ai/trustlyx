@@ -26,7 +26,7 @@ export const sendMagicLink = async (email: string) => {
   await emailAdapter?.sendEmail(
     email,
     "Your magic login link",
-    `<a href="http://localhost:3000/trustlyx/magic/${rawToken}">Login</a>`
+    `<a href="${appUrl}/magic/${rawToken}">Login</a>`
   );
 };
 
@@ -59,7 +59,7 @@ if (new Date() > record.expiresAt) {
   });
 
   const refreshToken = signRefreshToken({
-    id: user._id,
+    id: user._id,//type object isnt assignable to string
   });
 
   return { accessToken, refreshToken };

@@ -1,7 +1,13 @@
 import jwt from "jsonwebtoken";
 import { getConfig } from "./config";
 
-export const signAccessToken = <T extends object>(payload: T) => {
+interface JWTPayload {
+  id: string;
+  role?: string;
+  tenantId?: string;
+}
+
+export const signAccessToken = <T extends JWTPayload>(payload: T) => {
   const { jwtSecret } = getConfig();
 
   return jwt.sign(payload, jwtSecret as string, {
@@ -9,7 +15,7 @@ export const signAccessToken = <T extends object>(payload: T) => {
   } as jwt.SignOptions);
 };
 
-export const signRefreshToken = <T extends object>(payload: T) => {
+export const signRefreshToken = <T extends JWTPayload>(payload: T) => {
   const { refreshSecret } = getConfig();
   if (!refreshSecret) throw new Error("Missing refresh secret");
   return jwt.sign(payload, refreshSecret as string, {
