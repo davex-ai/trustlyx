@@ -14,3 +14,5 @@ export const getConfig = () => {
   if (!config) throw new Error("Auth SDK not initialized");
   return config;
 };
+
+
