@@ -1,5 +1,4 @@
 import crypto from "crypto";
-import { getAdapters } from "../../helpers";
 import { User } from "../models/user.model";
 import { generateVerificationToken } from "../core/emailVerification";
 import { AuthSDK } from "../core/config";
@@ -28,7 +27,7 @@ export const sendMagicLink = async (sdk: AuthSDK, email: string) => {
     { upsert: true, new: true }
   );
 
-  await sdk.emailAdapter?.sendEmail(//doesnt exist
+  await sdk.email?.sendEmail(
     email,
     "Magic Link",
     `<a href="${sdk.appUrl}/magic/${rawToken}">Login</a>`

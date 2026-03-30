@@ -1,21 +1,26 @@
 import mongoose from "mongoose";
-import { ISession, IUser } from "./types";
+import { IUser, ISession } from "./types";
 
 const sessionSchema = new mongoose.Schema<ISession>({
-  token: { type: String, required: true },
+  token: String,
   createdAt: { type: Date, default: Date.now },
-  expiresAt: { type: Date, required: true },
+  expiresAt: Date,
 });
 
 const userSchema = new mongoose.Schema<IUser>({
-  email: { type: String, unique: true, index: true },
-  password: { type: String, required: true },
+  email: { type: String, index: true },
+  password: String,
   role: { type: String, default: "user" },
   verified: { type: Boolean, default: false },
+  tenantId: { type: String, index: true },
   refreshTokens: [sessionSchema],
-  tenantId: { type: String, index: true, required: true },
-  verificationTokens: [{ token: { type: String }, expiresAt: { type: Date } }],
-  provider: {  type: String }
+  verificationTokens: [
+    {
+      token: String,
+      expiresAt: Date,
+    },
+  ],
+  provider: String,
 });
 
 export const User = mongoose.model<IUser>("User", userSchema);
