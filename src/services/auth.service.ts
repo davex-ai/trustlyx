@@ -25,7 +25,7 @@ export const signup = async (email: string, password: string, tenantId: string) 
 const { email: emailAdapter } = getAdapters();
 
 await emailAdapter?.sendEmail(
-    user.email, "Verify your email", `<p>Click <a href="http://localhost:3000/verify/${rawToken}">here</a> to verify your email.</p>`
+    user.email, "Verify your email", `<p>Click <a href="http://localhost:3000/trustlyx/verify/${rawToken}">here</a> to verify your email.</p>`
 );
 
 

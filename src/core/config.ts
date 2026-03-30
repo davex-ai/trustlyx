@@ -5,6 +5,8 @@ export interface AuthConfig {
   jwtSecret: string;
   refreshSecret: string;
 
+  getTenant?: (req: any) => string
+
   adapters?: {
     email?: EmailAdapter;
     cache?: CacheAdapter;

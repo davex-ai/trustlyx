@@ -30,4 +30,3 @@ export const verifyRefreshToken = (token: string) => {
   }
   return jwt.verify(token, config.refreshSecret);
 };
-

@@ -26,7 +26,7 @@ export const sendMagicLink = async (email: string) => {
   await emailAdapter?.sendEmail(
     email,
     "Your magic login link",
-    `<a href="http://localhost:3000/magic/${rawToken}">Login</a>`
+    `<a href="http://localhost:3000/trustlyx/magic/${rawToken}">Login</a>`
   );
 };
 
