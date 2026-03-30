@@ -6,8 +6,8 @@ import { generateVerificationToken, hashToken } from "../core/emailVerification"
 import { getAdapters } from "../../helpers";
 import { getGoogleUser } from "./google";
 
-export const signup = async (email: string, password: string) => {
-  const existing = await User.findOne({ email });
+export const signup = async (email: string, password: string, tenantId: string) => {
+  const existing = await User.findOne({ email, tenantId });
   if (existing) throw new Error("User already exists");
 
   const hashed = await hashPassword(password);
@@ -31,9 +31,9 @@ await emailAdapter?.sendEmail(
   return user;
 };
 
-export const login = async (email: string, password: string) => {
+export const login = async (email: string, password: string, tenantId: string) => {
     if (await isLockedOut(email)) throw new Error("Account locked due to too many failed attempts");
-  const user = await User.findOne({ email });
+  const user = await User.findOne({ email, tenantId });
   if (!user) {await recordFailedLogin(email); throw new Error("User not found")};
 
   const valid = await comparePassword(password, user.password);
@@ -71,14 +71,15 @@ export const login = async (email: string, password: string) => {
   return { accessToken, refreshToken, user: safeUser };
 };
 
-export const handleGoogleAuth = async (code: string) => {
+export const handleGoogleAuth = async (code: string, tenantId: string) => {
   const googleUser = await getGoogleUser(code);
 
-  let user = await User.findOne({ email: googleUser.email });
+  let user = await User.findOne({ email: googleUser.email, tenantId });
 
   if (!user) {
     user = await User.create({
       email: googleUser.email,
+      tenantId,
       verified: true,
     });
   }

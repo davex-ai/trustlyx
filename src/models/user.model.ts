@@ -13,6 +13,7 @@ const userSchema = new mongoose.Schema<IUser>({
   role: { type: String, default: "user" },
   verified: { type: Boolean, default: false },
   refreshTokens: [sessionSchema],
+  tenantId: { type: String, index: true, required: true },
   verificationTokens: [{ token: { type: String }, expiresAt: { type: Date } }]
 });
 
