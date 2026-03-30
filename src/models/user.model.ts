@@ -14,7 +14,8 @@ const userSchema = new mongoose.Schema<IUser>({
   verified: { type: Boolean, default: false },
   refreshTokens: [sessionSchema],
   tenantId: { type: String, index: true, required: true },
-  verificationTokens: [{ token: { type: String }, expiresAt: { type: Date } }]
+  verificationTokens: [{ token: { type: String }, expiresAt: { type: Date } }],
+  provider: {  type: String }
 });
 
 export const User = mongoose.model<IUser>("User", userSchema);

@@ -4,8 +4,8 @@ const { cache } = getAdapters();
 
 const PREFIX = "login_fail:";
 
-export const recordFailedLogin = async (email: string) => {
-  const key = PREFIX + email;
+export const recordFailedLogin = async (email: string, tenantId: string) => {
+  const key = PREFIX + `${tenantId}:${email}`;
 
   const attempts = await redis.incr(key);
 
@@ -16,12 +16,12 @@ export const recordFailedLogin = async (email: string) => {
   return attempts;
 };
 
-export const isLockedOut = async (email: string) => {
-  const attempts = await cache?.get(PREFIX + email);
+export const isLockedOut = async (email: string, tenantId: string) => {
+  const attempts = await cache?.get(PREFIX + `${tenantId}:${email}`);
 
   return Number(attempts) >= 5;
 };
 
-export const resetFailedLogin = async (email: string) => {
-  await redis.del(PREFIX + email);
+export const resetFailedLogin = async (email: string, tenantId: string) => {
+  await redis.del(PREFIX + `${tenantId}:${email}`);
 };
