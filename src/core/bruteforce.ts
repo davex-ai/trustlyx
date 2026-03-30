@@ -1,4 +1,6 @@
+import { getAdapters } from "../../helpers";
 import { redis } from "./redis";
+const { cache } = getAdapters();
 
 const PREFIX = "login_fail:";
 
@@ -15,7 +17,7 @@ export const recordFailedLogin = async (email: string) => {
 };
 
 export const isLockedOut = async (email: string) => {
-  const attempts = await redis.get(PREFIX + email);
+  const attempts = await cache?.get(PREFIX + email);
 
   return Number(attempts) >= 5;
 };

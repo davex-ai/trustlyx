@@ -3,6 +3,7 @@ import { hashPassword, comparePassword } from "../core/password";
 import { signAccessToken, signRefreshToken } from "../core/jwt";
 import { isLockedOut, recordFailedLogin, resetFailedLogin } from "../core/bruteforce";
 import { generateVerificationToken, hashToken } from "../core/emailVerification";
+import { getAdapters } from "../../helpers";
 
 export const signup = async (email: string, password: string) => {
   const existing = await User.findOne({ email });
@@ -20,7 +21,12 @@ export const signup = async (email: string, password: string) => {
 });
 
 //TODO: SMTP/RESEND
-console.log(`http://localhost:3000/verify/${rawToken}`);
+const { userEmail } = getAdapters();
+
+await userEmail?.sendEmail(
+    user.email, "Verify your email", `<p>Click <a href="http://localhost:3000/verify/${rawToken}">here</a> to verify your email.</p>`
+);
+
 
   return user;
 };
