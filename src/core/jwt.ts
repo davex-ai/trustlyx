@@ -5,7 +5,7 @@ export const signAccessToken = <T extends object>(payload: T) => {
   const { jwtSecret } = getConfig();
 
   return jwt.sign(payload, jwtSecret as string, {
-    expiresIn: "15h",
+    expiresIn: "15m",
   } as jwt.SignOptions);
 };
 

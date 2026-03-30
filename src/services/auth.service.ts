@@ -1,8 +1,8 @@
 import { User } from "../models/user.model";
 import { hashPassword, comparePassword } from "../core/password";
-import { signAccessToken, signRefreshToken, verifyRefreshToken } from "../core/jwt";
+import { signAccessToken, signRefreshToken } from "../core/jwt";
 import { isLockedOut, recordFailedLogin, resetFailedLogin } from "../core/bruteforce";
-import { generateVerificationToken } from "../core/emailVerification";
+import { generateVerificationToken, hashToken } from "../core/emailVerification";
 
 export const signup = async (email: string, password: string) => {
   const existing = await User.findOne({ email });
@@ -10,16 +10,17 @@ export const signup = async (email: string, password: string) => {
 
   const hashed = await hashPassword(password);
 
-  const token = generateVerificationToken()
+  const rawToken = generateVerificationToken()
+  const hashedToken = hashToken(rawToken);
 
   const user = await User.create({
     email,
     password: hashed,
-    verificationTokens: [token]// no over load matches this call    
+    verificationTokens: [hashedToken]
 });
 
 //TODO: SMTP/RESEND
-console.log(`http://localhost:3000/verify/${token}`);
+console.log(`http://localhost:3000/verify/${rawToken}`);
 
   return user;
 };
@@ -38,12 +39,17 @@ export const login = async (email: string, password: string) => {
     role: user.role,
   });
 
+  if (!user.verified) {
+  throw new Error("Please verify your email");
+}
+
   const refreshToken = signRefreshToken({
     id: user._id,
   });
+  const hashedRefreshToken = hashToken(refreshToken);
 
   user.refreshTokens.push({
-    token: refreshToken,
+    token: hashedRefreshToken,
     createdAt: new Date(),
     expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
   });

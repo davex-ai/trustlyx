@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { verifyToken } from "../core/jwt";
+import { verifyAccessToken } from "../core/jwt";
 
 export const protect = () => {
   return (req: Request, res: Response, next: NextFunction) => {
@@ -9,7 +9,7 @@ export const protect = () => {
       if (!header) throw new Error("No token");
 
       const token = header.split(" ")[1];
-      const decoded = verifyToken(token);
+      const decoded = verifyAccessToken(token);
 
       (req as any).user = decoded;
 
