@@ -4,7 +4,7 @@ export const getAdapters = () => {
   const { adapters } = getConfig();
 
   return {
-    email: adapters?.email,
+    userEmail: adapters?.email,
     cache: adapters?.cache,
   };
 };

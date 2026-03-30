@@ -14,3 +14,4 @@ export interface ISession {
   createdAt: Date;
   expiresAt: Date;
 }
+

@@ -11,3 +11,4 @@ export const authRateLimiter = rateLimit({
     sendCommand: (...args: string[]) => (redis as any).call(...args),
    }),
 });
+
