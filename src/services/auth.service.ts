@@ -1,6 +1,6 @@
 import { User } from "../models/user.model";
 import { hashPassword, comparePassword } from "../core/password";
-import { signToken } from "../core/jwt";
+import { signAccessToken, signRefreshToken, verifyRefreshToken } from "../core/jwt";
 
 export const signup = async (email: string, password: string) => {
   const existing = await User.findOne({ email });
@@ -20,13 +20,30 @@ export const login = async (email: string, password: string) => {
   const user = await User.findOne({ email });
   if (!user) throw new Error("User not found");
 
-  const valid = await comparePassword(password, user.password);//argument of type 'string | null |....
+  const valid = await comparePassword(password, user.password);
   if (!valid) throw new Error("Invalid credentials");
 
-  const token = signToken({
+  const accessToken = signAccessToken({
     id: user._id,
     role: user.role,
   });
 
-  return { token, user };
+  const refreshToken = signRefreshToken({
+    id: user._id,
+  });
+
+  user.refreshTokens.push({//argument of type '{ token...}
+    token: refreshToken,
+    createdAt: new Date(),
+    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+  });
+
+  await user.save();
+    const safeUser = {
+    id: user._id,
+    email: user.email,
+    role: user.role,
+    verified: user.verified,
+    };
+  return { accessToken, refreshToken, user };
 };

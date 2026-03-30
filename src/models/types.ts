@@ -5,4 +5,11 @@ export interface IUser extends Document {
   password: string;
   role: "user" | "admin";
   verified: boolean;
+  refreshTokens: ISession[];
+
+}
+export interface ISession {
+  token: string;
+  createdAt: Date;
+  expiresAt: Date;
 }

@@ -1,15 +1,28 @@
 import jwt from "jsonwebtoken";
 import { getConfig } from "./config";
 
-export const signToken = <T extends object>(payload: T) => {
-  const { jwtSecret, jwtExpiresIn } = getConfig();
+export const signAccessToken = <T extends object>(payload: T) => {
+  const { jwtSecret } = getConfig();
 
   return jwt.sign(payload, jwtSecret as string, {
-    expiresIn: jwtExpiresIn ?? "1h",
+    expiresIn: "15h",
   } as jwt.SignOptions);
 };
 
-export const verifyToken = (token: string) => {
+export const signRefreshToken = <T extends object>(payload: T) => {
+  const { refreshSecret } = getConfig();
+  if (!refreshSecret) throw new Error("Missing refresh secret");
+  return jwt.sign(payload, refreshSecret as string, {
+    expiresIn: "7d",
+  } as jwt.SignOptions);
+};
+
+export const verifyAccessToken = (token: string) => {
   const { jwtSecret } = getConfig();
   return jwt.verify(token, jwtSecret);
+};
+
+export const verifyRefreshToken = (token: string) => {
+  const { refreshSecret } = getConfig();
+  return jwt.verify(token, refreshSecret);
 };
