@@ -5,6 +5,7 @@ import { SecurityService } from "../services/security.service";
 import { UserService } from "../services/user.service";
 import { JWTService } from "../core/jwt";
 import { AuthContext } from "./context";
+import { UserAdapter } from "../adapters/useradapter";
 
 export interface AuthConfig {
   jwtSecret: string;
@@ -15,6 +16,7 @@ export interface AuthConfig {
     email?: EmailAdapter;
     cache?: CacheAdapter;
   };
+  userAdapter: UserAdapter
 
   hooks?: {
   onUserCreated?: (user: any) => void;

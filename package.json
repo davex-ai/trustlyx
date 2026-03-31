@@ -2,14 +2,19 @@
   "name": "trustlyx",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsup src/index.ts --format esm,cjs --dts --tsconfig tsconfig.build.json"
   },
   "keywords": [],
-  "author": "",
+  "author": "davex-ai",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
+  "types": "dist/index.d.ts",
+  "module": "dist/index.mjs",
+  "files": [
+    "dist"
+  ],
   "dependencies": {
     "axios": "^1.14.0",
     "bcrypt": "^6.0.0",
@@ -28,6 +33,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "nodemon": "^3.1.14",
     "ts-node": "^10.9.2",
+    "tsup": "^8.5.1",
     "typescript": "^6.0.2"
   }
 }
