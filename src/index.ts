@@ -7,5 +7,6 @@ export * from "./services/user.service";
 export * from "./adapters/types";
 export * from "./adapters/redis.adapter";
 export * from "./adapters/resend.adapter";
+export * from "./adapters/smtp.adapter";
 
 export * from "./middleware/protect";
