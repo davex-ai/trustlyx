@@ -1,6 +1,4 @@
 import crypto from "crypto";
-import { AuthSDK } from "../core/config";
-import { User } from "../models/user.model";
 import { AuthContext } from "../core/context";
 import { generateVerificationToken, hashToken } from "core/emailVerification";
 
@@ -13,13 +11,8 @@ export const sendMagicLink = async (ctx: AuthContext, email: string) => {
   const raw = generateVerificationToken();
 
   let user = await sdk.userAdapter.findByEmail(email, tenantId);
-
   if (!user) {
-    user = await sdk.userAdapter.create({
-      email,
-      tenantId,
-      verified: false,
-    });
+    user = await sdk.userAdapter.create({ email, tenantId, verified: false });
   }
 
   await sdk.userAdapter.addVerificationToken(user.id, {
@@ -48,10 +41,15 @@ export const verifyMagicLink = async (ctx: AuthContext, token: string) => {
   await sdk.userAdapter.removeVerificationToken(user.id, hashed);
   await sdk.userAdapter.update(user.id, { verified: true });
 
-  const accessToken = sdk.jwt.signAccessToken({
-    id: user.id,
-    tenantId,
+  const accessToken = sdk.jwt.signAccessToken({ id: user.id, role: user.role, tenantId });
+  const refreshToken = sdk.jwt.signRefreshToken({ id: user.id });
+
+  await sdk.userAdapter.addSession(user.id, {
+    token: hashToken(refreshToken),
+    createdAt: new Date(),
+    expiresAt: new Date(Date.now() + 7 * 86400000),
+    used: false,
   });
 
-  return { accessToken };
+  return { accessToken, refreshToken };
 };
