@@ -1,5 +1,6 @@
 import axios from "axios";
-import { OAuthProviderHandler } from "services/oauth";
+import { OAuthProviderHandler } from "services/provider.interface";
+
 export class GithubProvider implements OAuthProviderHandler {
   constructor(private config: { clientId: string; clientSecret: string; redirectUri: string }) {}
   getAuthUrl() {

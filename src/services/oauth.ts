@@ -2,16 +2,10 @@ import { AuthSDK } from "../core/config";
 import { hashToken } from "../core/emailVerification";
 import { GithubProvider } from "strategies/github";
 import { GoogleProvider } from "strategies/google";
-
-export type OAuthProvider = "google" | "github";
-
-export interface OAuthProviderHandler {
-  getAuthUrl(): string;
-  getUser(code: string): Promise<{ email: string; name?: string; avatar?: string }>;
-}
+import { OAuthProvider, OAuthProviderHandler } from "./provider.interface";
 
 export class OAuthService {
-  constructor(private sdk: AuthSDK) {}
+  constructor(private sdk: AuthSDK) { }
 
   private getProvider(name: OAuthProvider): OAuthProviderHandler {
     if (name === "google") {
@@ -31,7 +25,7 @@ export class OAuthService {
 
   async handleOAuthLogin(provider: OAuthProvider, code: string, tenantId: string) {
     const profile = await this.getProvider(provider).getUser(code);
-    
+
     let user = await this.sdk.userAdapter.findByEmail(profile.email, tenantId);
     if (!user) {
       user = await this.sdk.userAdapter.create({
@@ -40,6 +34,11 @@ export class OAuthService {
         verified: true,
         provider,
       });
+      try {
+        this.sdk.hooks?.onUserCreated?.(user);
+      } catch (err) {
+        console.error("onUserCreated hook threw:", err);
+      }
     }
 
     const accessToken = this.sdk.jwt.signAccessToken({ id: user.id, role: user.role, tenantId });
@@ -51,8 +50,13 @@ export class OAuthService {
       expiresAt: new Date(Date.now() + 7 * 86400000),
       used: false,
     });
+    try {
+      this.sdk.hooks?.onLogin?.(user);
+    } catch (err) {
+      console.error("onLogin hook threw:", err);
+    }
 
     return { accessToken, refreshToken, user };
-  
+
   }
 }

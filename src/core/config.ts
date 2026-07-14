@@ -1,5 +1,4 @@
 import { CacheAdapter, EmailAdapter } from "../adapters/types";
-import { AuthService } from "../services/auth.service";
 import { OAuthService } from "../services/oauth";
 import { SecurityService } from "../services/security.service";
 import { UserService } from "../services/user.service";
@@ -58,6 +57,10 @@ export class AuthSDK {
 
   get appUrl() {
     return this.config.appUrl;
+  }
+  
+  get hooks() {
+    return this.config.hooks;
   }
 
   get email() {

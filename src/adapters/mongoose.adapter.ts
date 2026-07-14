@@ -8,8 +8,6 @@ export class MongooseUserAdapter implements UserAdapter {
     return { ...obj, id: obj._id.toString() };
   }
 
-  // ---- core CRUD ----
-
   async findById(id: string) {
     return this.toPlain(await User.findById(id));
   }
@@ -31,8 +29,6 @@ export class MongooseUserAdapter implements UserAdapter {
   async update(id: string, data: any) {
     return this.toPlain(await User.findByIdAndUpdate(id, data, { new: true }));
   }
-
-  // ---- verification tokens ----
 
   async addVerificationToken(userId: string, token: { token: string; expiresAt: Date }) {
     return this.toPlain(
@@ -59,8 +55,6 @@ export class MongooseUserAdapter implements UserAdapter {
       )
     );
   }
-
-  // ---- sessions / refresh tokens ----
 
   async addSession(
     userId: string,

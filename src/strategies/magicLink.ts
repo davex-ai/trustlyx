@@ -8,6 +8,11 @@ export const sendMagicLink = async (ctx: AuthContext, email: string) => {
   let user = await sdk.userAdapter.findByEmail(email, tenantId);
   if (!user) {
     user = await sdk.userAdapter.create({ email, tenantId, verified: false });
+    try {
+    sdk.hooks?.onUserCreated?.(user);
+  } catch (err) {
+    console.error("onUserCreated hook threw:", err);
+  }
   }
 
   await sdk.userAdapter.addVerificationToken(user.id, {
@@ -45,6 +50,12 @@ export const verifyMagicLink = async (ctx: AuthContext, token: string) => {
     expiresAt: new Date(Date.now() + 7 * 86400000),
     used: false,
   });
+
+  try {
+  sdk.hooks?.onLogin?.(user);
+} catch (err) {
+  console.error("onLogin hook threw:", err);
+}
 
   return { accessToken, refreshToken };
 };

@@ -1,6 +1,4 @@
 import { AuthSDK } from "../core/config";
-import { User } from "../models/user.model";
-
 
 export class UserService {
   constructor(private sdk: AuthSDK) {}

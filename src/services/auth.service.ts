@@ -4,7 +4,9 @@ import { AuthContext } from "../core/context";
 import { generateVerificationToken, hashToken } from "core/emailVerification";
 
 export class AuthService {
+
   constructor ( private ctx: AuthContext ){}
+
   async signup(email: string, password: string) {
   const { tenantId, sdk } = this.ctx;
   const existing = await sdk.userAdapter.findByEmail(email, tenantId);
@@ -30,7 +32,11 @@ export class AuthService {
     "Verify your email",
     `<a href="${sdk.appUrl}/verify-email/${rawToken}">Verify your email</a>`
   );
-
+  try {
+    sdk.hooks?.onUserCreated?.(user);
+  } catch (err) {
+    console.error("onUserCreated hook threw:", err);
+  }
   return user;
 }
 
@@ -85,6 +91,12 @@ async login(email: string, password: string) {
     used: false,
   });
 
+  try {
+    sdk.hooks?.onLogin?.(user);
+  } catch (err) {
+    console.error("onLogin hook threw:", err);
+  } 
+   
   return { accessToken, refreshToken };
 }
 

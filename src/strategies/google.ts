@@ -1,5 +1,5 @@
 import axios from "axios";
-import { OAuthProviderHandler } from "services/oauth";
+import { OAuthProviderHandler } from "services/provider.interface";
 
 
 export class GoogleProvider implements OAuthProviderHandler {
