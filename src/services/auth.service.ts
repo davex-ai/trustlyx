@@ -2,9 +2,7 @@ import crypto from "crypto";
 import { User } from "../models/user.model";
 import { AuthSDK } from "../core/config";
 import { AuthContext } from "../core/context";
-
-const hashToken = (token: string) =>
-  crypto.createHash("sha256").update(token).digest("hex");
+import { generateVerificationToken, hashToken } from "core/emailVerification";
 
 export class AuthService {
   constructor(private ctx: AuthContext) {}

@@ -63,6 +63,8 @@ export class AuthSDK {
   get email() {
     return this.config.adapters?.email;
   }
+  
+  get userAdapter() { return this.config.userAdapter; } 
 
   get cache() {
     return this.config.adapters?.cache;

@@ -1,4 +1,4 @@
-import { AuthService } from "services/auth.service";
+import { AuthService } from "../services/auth.service";
 import { AuthSDK } from "./config";
 
 export class AuthContext {
