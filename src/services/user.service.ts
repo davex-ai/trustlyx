@@ -6,10 +6,10 @@ export class UserService {
   constructor(private sdk: AuthSDK) {}
 
   findById(id: string) {
-    return User.findById(id);
+    return this.sdk.userAdapter.findById(id);
   }
 
   findByEmail(email: string, tenantId: string) {
-    return User.findOne({ email, tenantId });
+    return this.sdk.userAdapter.findByEmail( email, tenantId );
   }
 }

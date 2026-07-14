@@ -1,10 +1,5 @@
-import crypto from "crypto";
 import { AuthContext } from "../core/context";
 import { generateVerificationToken, hashToken } from "core/emailVerification";
-
-
-const hash = (t: string) =>
-  crypto.createHash("sha256").update(t).digest("hex");
 
 export const sendMagicLink = async (ctx: AuthContext, email: string) => {
   const { tenantId, sdk } = ctx;
