@@ -30,6 +30,11 @@ export interface AuthConfig {
       clientSecret: string;
       redirectUri: string;
     };
+    github?: {
+      clientId: string;
+      clientSecret: string;
+      redirectUri: string;
+    };
   };
 }
 
@@ -65,6 +70,9 @@ export class AuthSDK {
 
   get google() {
     return this.config.providers?.google;
+  }
+  get github() {
+    return this.config.providers?.github;
   }
 
   getTenant(req?: any): string {
