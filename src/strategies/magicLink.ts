@@ -2,27 +2,30 @@ import crypto from "crypto";
 import { AuthSDK } from "../core/config";
 import { User } from "../models/user.model";
 import { AuthContext } from "../core/context";
+import { generateVerificationToken, hashToken } from "core/emailVerification";
 
 
 const hash = (t: string) =>
   crypto.createHash("sha256").update(t).digest("hex");
 
 export const sendMagicLink = async (ctx: AuthContext, email: string) => {
-  const raw = crypto.randomBytes(32).toString("hex");
   const { tenantId, sdk } = ctx;
+  const raw = generateVerificationToken();
 
-  await User.findOneAndUpdate(
-    { email, tenantId },
-    {
-      $push: {
-        verificationTokens: {
-          token: hash(raw),
-          expiresAt: new Date(Date.now() + 15 * 60 * 1000),
-        },
-      },
-    },
-    { upsert: true }
-  );
+  let user = await sdk.userAdapter.findByEmail(email, tenantId);
+
+  if (!user) {
+    user = await sdk.userAdapter.create({
+      email,
+      tenantId,
+      verified: false,
+    });
+  }
+
+  await sdk.userAdapter.addVerificationToken(user.id, {
+    token: hashToken(raw),
+    expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+  });
 
   await sdk.email?.sendEmail(
     email,
@@ -33,35 +36,20 @@ export const sendMagicLink = async (ctx: AuthContext, email: string) => {
 
 export const verifyMagicLink = async (ctx: AuthContext, token: string) => {
   const { tenantId, sdk } = ctx;
-  const hashed = hash(token);
+  const hashed = hashToken(token);
 
-  const user = await User.findOne({
-    tenantId,
-    "verificationTokens.token": hashed,
-  });
-
+  const user = await sdk.userAdapter.findByVerificationToken(hashed, tenantId);
   if (!user) throw new Error("Invalid link");
 
-  const record = user.verificationTokens.find(
-    (t) => t.token === hashed
-  );
-
+  const record = (user.verificationTokens || []).find((t: any) => t.token === hashed);
   if (!record) throw new Error("Invalid link");
+  if (new Date() > new Date(record.expiresAt)) throw new Error("Link expired");
 
-  if (new Date() > record.expiresAt) {
-    throw new Error("Link expired");
-  }
-
-  user.verificationTokens = user.verificationTokens.filter(
-    (t) => t.token !== hashed
-  );
-
-  user.verified = true;
-
-  await user.save();
+  await sdk.userAdapter.removeVerificationToken(user.id, hashed);
+  await sdk.userAdapter.update(user.id, { verified: true });
 
   const accessToken = sdk.jwt.signAccessToken({
-    id: user._id.toString(),
+    id: user.id,
     tenantId,
   });
 
