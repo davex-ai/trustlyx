@@ -10,33 +10,71 @@ export class AuthService {
   constructor(private ctx: AuthContext) {}
 
   async signup(email: string, password: string) {
-    const { tenantId, sdk } = this.ctx;
-    const existing = await User.findOne({ email, tenantId });
-    if (existing) throw new Error("User already exists");
+  const { tenantId, sdk } = this.ctx;
+  const existing = await User.findOne({ email, tenantId });
+  if (existing) throw new Error("User already exists");
 
-    const hashed = await sdk.security.hashPassword(password);
+  const hashedPassword = await sdk.security.hashPassword(password);
+  const rawToken = generateVerificationToken();
 
-    return User.create({
-      email,
-      password: hashed,
-      tenantId,
-      verified: false,
-    });
+  const user = await User.create({
+    email,
+    password: hashedPassword,
+    tenantId,
+    verified: false,
+    verificationTokens: [
+      { token: hashToken(rawToken), expiresAt: new Date(Date.now() + 24 * 3600_000) },
+    ],
+  });
+
+  await sdk.email?.sendEmail(
+    email,
+    "Verify your email",
+    `<a href="${sdk.appUrl}/verify-email/${rawToken}">Verify your email</a>`
+  );
+
+  return user;
+}
+
+  async verifyEmail(token: string) {
+  const { tenantId } = this.ctx;
+  const hashed = hashToken(token);
+
+  const user = await User.findOne({ tenantId, "verificationTokens.token": hashed });
+  if (!user) throw new Error("Invalid or expired token");
+
+  const record = user.verificationTokens.find(t => t.token === hashed);
+  if (!record || new Date() > record.expiresAt) throw new Error("Invalid or expired token");
+
+  user.verified = true;
+  user.verificationTokens = user.verificationTokens.filter(t => t.token !== hashed);
+  await user.save();
+
+  return { verified: true };
   }
 
   async login(email: string, password: string) {
-    const { tenantId, sdk } = this.ctx;
-    const user = await User.findOne({ email, tenantId });
-    if (!user) throw new Error("User not found");
+  const { tenantId, sdk } = this.ctx;
 
-    const valid = await sdk.security.comparePassword(
-      password,
-      user.password
-    );
+  if (await sdk.security.isLockedOut(email, tenantId)) {
+    throw new Error("Too many failed attempts. Try again later.");
+  }
 
-    if (!valid) throw new Error("Invalid credentials");
+  const user = await User.findOne({ email, tenantId });
+  if (!user) {
+    await sdk.security.recordFailedLogin(email, tenantId);
+    throw new Error("Invalid credentials"); // same message as bad password — don't leak which one
+  }
 
-    if (!user.verified) throw new Error("Verify your email");
+  const valid = await sdk.security.comparePassword(password, user.password);
+  if (!valid) {
+    await sdk.security.recordFailedLogin(email, tenantId);
+    throw new Error("Invalid credentials");
+  }
+
+  if (!user.verified) throw new Error("Verify your email");
+
+  await sdk.security.resetFailedLogin(email, tenantId);
 
     const accessToken = sdk.jwt.signAccessToken({
       id: user._id.toString(),
