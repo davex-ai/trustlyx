@@ -5,6 +5,8 @@ export * from "./services/auth.service";
 export * from "./services/user.service";
 export * from "./services/oauth";
 export * from "./services/security.service";
+export * from "./services/provider.interface";
+export * from "./strategies/magicLink";
 
 export * from "./adapters/types";
 export * from "./adapters/redis.adapter";
